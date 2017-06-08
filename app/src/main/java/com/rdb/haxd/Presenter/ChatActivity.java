@@ -27,7 +27,6 @@ import com.rdb.haxd.Model.Hacker;
 import com.rdb.haxd.R;
 
 import java.util.List;
-import java.util.Timer;
 
 public class ChatActivity extends Activity
 {
@@ -47,6 +46,9 @@ public class ChatActivity extends Activity
 
   private CountDownTimer timer;
     private boolean turn;
+    private  boolean hacked;
+    private boolean timeout;
+    private int progress;
 
   @Override
   public void onCreate( Bundle savedInstanceState )
@@ -58,12 +60,13 @@ public class ChatActivity extends Activity
     isOwner = currentIntent.getBooleanExtra( "owner", false );
     subtopic = currentIntent.getStringExtra( "subtopic" );
     companionNickname = isOwner ? subtopic.split( "_" )[ 2 ] : subtopic.split( "_" )[ 0 ];
-
+      hacked = !isOwner;
       turn = isOwner;
-
+      progress =100;
     initUI();
 
     acceptationMessage = isOwner;
+      timeout = false;
 
     publishOptions = new PublishOptions();
     publishOptions.setPublisherId( Hacker.currentUser().getUsername() );
@@ -111,9 +114,11 @@ public class ChatActivity extends Activity
 
           @Override
           public void onFinish() {
-
+              if (!timeout) {
+                  timeout = true;
+              }
           }
-      }
+      };
     history = (EditText) findViewById( R.id.historyField );
     messageField = (EditText) findViewById( R.id.messageField );
     chatWithSmbTitleTextView = (TextView) findViewById( R.id.textChatWithSmbTitle );
@@ -128,10 +133,15 @@ public class ChatActivity extends Activity
         return onSendMessage( keyCode, keyEvent );
       }
     } );
+      if(!turn) {
+          messageField.setEnabled(false);
+      }
   }
 
   private void onReceiveMessage( List<Message> messages )
   {
+      turn = true;
+      messageField.setEnabled(turn);
     if( isOwner )
     {
       progressDialog.cancel();
@@ -153,9 +163,16 @@ public class ChatActivity extends Activity
       }
     }
 
-    for( Message message : messages )
+    /*for( Message message : messages )
     {
       history.setText( history.getText() + "\n" + message.getPublisherId() + ": " + message.getData() );
+    }*/
+
+    if(hacked) {
+        if(messages.get(0).equals("release virus.exe")) {
+            timer.start();
+        }
+
     }
   }
 
@@ -180,6 +197,8 @@ public class ChatActivity extends Activity
           if( messageStatus == PublishStatusEnum.SCHEDULED)
           {
             messageField.setText( "" );
+              turn = false;
+              messageField.setEnabled(turn);
           }
           else
           {
